@@ -1,0 +1,19 @@
+<?php
+
+namespace DummyNamespace;
+
+use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
+
+class DummyClass extends Notification
+{
+    public function toMail($notifiable)
+    {
+        return (new MailMessage)
+            ->subject(__('notifications.DummySlug.subject'))
+            ->markdown('mail.notifications.DummySlug', [
+                'user' => $notifiable,
+            ]);
+    }
+}
+

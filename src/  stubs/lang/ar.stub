@@ -1,0 +1,7 @@
+<?php
+
+return [
+    'DummySlug' => [
+        'subject' => 'عنوان الإشعار'
+    ]
+];

@@ -1,0 +1,7 @@
+<?php
+
+return [
+    'DummySlug' => [
+        'subject' => 'Notification Subject'
+    ]
+];

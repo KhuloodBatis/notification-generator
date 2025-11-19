@@ -1,0 +1,29 @@
+{
+  "name": "khuloodbatis/notification-generator",
+  "description": "Laravel package to generate notifications, events, listeners, markdown + translations",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Khuloodbatis\\NotificationGenerator\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Khuloodbatis\\NotificationGenerator\\NotificationGeneratorServiceProvider"
+      ]
+    }
+  },
+  "require": {
+    "php": "^8.1",
+    "illuminate/support": "^10.0|^11.0"
+  },
+
+  "repositories": [
+    {
+        "type": "path",
+        "url": "../notification-generator"
+    }
+]
+}

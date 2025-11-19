@@ -1,0 +1,15 @@
+<?php
+
+namespace DummyNamespace;
+
+use DummyEvent;
+use DummyNotification;
+use Illuminate\Support\Facades\Notification;
+
+class DummyClass
+{
+    public function handle(DummyEvent $event)
+    {
+        Notification::send($event->data['user'], new DummyNotification($event->data));
+    }
+}
