@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 class MakeFullNotificationCommand extends Command
 {
-    protected $signature = 'khol:make-notification 
+    protected $signature = 'notification-generator:make-notification 
         {name : Notification name} 
         {--event=} 
         {--listener=}';
