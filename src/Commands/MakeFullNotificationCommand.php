@@ -50,9 +50,10 @@ class MakeFullNotificationCommand extends Command
             'notification.stub',
             app_path("Notifications/{$parsedNotification['path']}/{$parsedNotification['class']}.php"),
             [
-                'DummyClass' => $parsedNotification['class'],
+                'DummyClass'     => $parsedNotification['class'],
                 'DummyNamespace' => $parsedNotification['namespace'],
-                'DummySlug' => $slug,
+                'DummySlug'      => $slug,
+                'DummyPath'      => $parsedNotification['dotPath'], // ← HERE
             ]
         );
 
@@ -61,7 +62,7 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         $this->createFromStub(
             'markdown.stub',
-            resource_path("views/emails/" . strtolower($parsedNotification['path']) . "/{$slug}.blade.php"),
+            resource_path("views/emails/{$parsedNotification['path']}/{$slug}.blade.php"),
             [
                 'DummySlug' => $slug
             ]
@@ -122,18 +123,28 @@ class MakeFullNotificationCommand extends Command
         $input = str_replace('\\', '/', $input);
         $parts = explode('/', trim($input, '/'));
 
+        // Class always StudlyCase
         $class = Str::studly(array_pop($parts));
-        $directories = array_map(fn($p) => Str::studly($p), $parts);
+
+        // Namespace uses StudlyCase folders
+        $namespaceParts = array_map(fn($p) => Str::studly($p), $parts);
 
         $namespace = $baseNamespace;
-        if (!empty($directories)) {
-            $namespace .= '\\' . implode('\\', $directories);
+        if (!empty($namespaceParts)) {
+            $namespace .= '\\' . implode('\\', $namespaceParts);
         }
+
+        // PATH MUST BE LOWERCASE — THIS FIXES YOUR ISSUE
+        $lowerPath = implode('/', array_map(fn($p) => Str::lower($p), $parts));
+
+        // DOT PATH for Notification = lowercase.orders
+        $dotPath = str_replace('/', '.', $lowerPath);
 
         return [
             'class' => $class,
             'namespace' => $namespace,
-            'path' => implode('/', $directories),
+            'path' => $lowerPath,     // ← for file system
+            'dotPath' => $dotPath,    // ← for view + lang keys
         ];
     }
 
@@ -161,25 +172,25 @@ class MakeFullNotificationCommand extends Command
     // --------------------------------------------------------
     // Generate lang files (EN + AR)
     // --------------------------------------------------------
-    protected function generateLangFiles($slug, $parsed)
-    {
-        foreach (['en', 'ar'] as $lang) {
+ protected function generateLangFiles($slug, $parsed)
+{
+    foreach (['en', 'ar'] as $lang) {
 
-            // Example: lang/en/emails/orders/
-            $folder = lang_path("{$lang}/emails/" . strtolower($parsed['path']));
+        $langFolder = lang_path("$lang/emails/{$parsed['path']}");
 
-            if (!is_dir($folder)) {
-                mkdir($folder, 0777, true);
-            }
-
-            // file path:
-            $target = "{$folder}/{$slug}.php";
-
-            $this->createFromStub(
-                "lang/{$lang}.stub",
-                $target,
-                ['DummySlug' => $slug]
-            );
+        if (!is_dir($langFolder)) {
+            mkdir($langFolder, 0775, true);
         }
-    }
+
+        $target = "{$langFolder}/{$slug}.php";
+
+        $this->createFromStub(
+            "lang/{$lang}.stub",
+            $target,
+            [
+                'DummySlug' => $slug,
+                'DummyPath' => $parsed['dotPath'], // for notification stub
+            ]
+        );
+  
 }
