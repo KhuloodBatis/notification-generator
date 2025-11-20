@@ -172,25 +172,26 @@ class MakeFullNotificationCommand extends Command
     // --------------------------------------------------------
     // Generate lang files (EN + AR)
     // --------------------------------------------------------
- protected function generateLangFiles($slug, $parsed)
-{
-    foreach (['en', 'ar'] as $lang) {
+    protected function generateLangFiles($slug, $parsed)
+    {
+        foreach (['en', 'ar'] as $lang) {
 
-        $langFolder = lang_path("$lang/emails/{$parsed['path']}");
+            $langFolder = lang_path("$lang/emails/{$parsed['path']}");
 
-        if (!is_dir($langFolder)) {
-            mkdir($langFolder, 0775, true);
+            if (!is_dir($langFolder)) {
+                mkdir($langFolder, 0775, true);
+            }
+
+            $target = "{$langFolder}/{$slug}.php";
+
+            $this->createFromStub(
+                "lang/{$lang}.stub",
+                $target,
+                [
+                    'DummySlug' => $slug,
+                    'DummyPath' => $parsed['dotPath'], // for notification stub
+                ]
+            );
         }
-
-        $target = "{$langFolder}/{$slug}.php";
-
-        $this->createFromStub(
-            "lang/{$lang}.stub",
-            $target,
-            [
-                'DummySlug' => $slug,
-                'DummyPath' => $parsed['dotPath'], // for notification stub
-            ]
-        );
-  
+    }
 }
