@@ -62,7 +62,7 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         $this->createFromStub(
             'markdown.stub',
-            resource_path("views/emails/{$parsedNotification['path']}/{$slug}.blade.php"),
+            resource_path("views/emails/{$parsed['path']}/{$slug}.blade.php"),
             [
                 'DummySlug' => $slug
             ]
@@ -123,7 +123,7 @@ class MakeFullNotificationCommand extends Command
         $input = str_replace('\\', '/', $input);
         $parts = explode('/', trim($input, '/'));
 
-        // Class always StudlyCase
+        // Class (always StudlyCase)
         $class = Str::studly(array_pop($parts));
 
         // Namespace uses StudlyCase folders
@@ -134,17 +134,17 @@ class MakeFullNotificationCommand extends Command
             $namespace .= '\\' . implode('\\', $namespaceParts);
         }
 
-        // PATH MUST BE LOWERCASE — THIS FIXES YOUR ISSUE
-        $lowerPath = implode('/', array_map(fn($p) => Str::lower($p), $parts));
+        // LOWERCASE path used for view + lang files
+        $lowerPath = implode('/', array_map(fn($p) => strtolower($p), $parts));
 
-        // DOT PATH for Notification = lowercase.orders
+        // Dot notation for lang + view keys
         $dotPath = str_replace('/', '.', $lowerPath);
 
         return [
-            'class' => $class,
+            'class'     => $class,
             'namespace' => $namespace,
-            'path' => $lowerPath,     // ← for file system
-            'dotPath' => $dotPath,    // ← for view + lang keys
+            'path'      => $lowerPath,  // <-- lowercase folders
+            'dotPath'   => $dotPath,    // <-- lowercase/orders
         ];
     }
 
@@ -176,7 +176,7 @@ class MakeFullNotificationCommand extends Command
     {
         foreach (['en', 'ar'] as $lang) {
 
-            $langFolder = lang_path("$lang/emails/{$parsed['path']}");
+           $langFolder = lang_path("$lang/emails/{$parsed['path']}");
 
             if (!is_dir($langFolder)) {
                 mkdir($langFolder, 0775, true);
