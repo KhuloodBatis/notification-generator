@@ -48,7 +48,7 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         $this->createFromStub(
             'notification.stub',
-            app_path("Notifications/{$parsedNotification['path']}/{$parsedNotification['class']}.php"),
+            app_path("Notifications/{$parsedNotification['namespacePath']}/{$parsedNotification['class']}.php"),
             [
                 'DummyClass'     => $parsedNotification['class'],
                 'DummyNamespace' => $parsedNotification['namespace'],
@@ -62,7 +62,7 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         $this->createFromStub(
             'markdown.stub',
-             resource_path("views/emails/{$parsedNotification['path']}/{$slug}.blade.php"),
+           resource_path("views/emails/{$parsedNotification['path']}/{$slug}.blade.php"),
             [
                 'DummySlug' => $slug
             ]
@@ -74,7 +74,8 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         $this->createFromStub(
             'event.stub',
-            app_path("Events/{$parsedEvent['path']}/{$parsedEvent['class']}.php"),
+            app_path("Events/{$parsedEvent['namespacePath']}/{$parsedEvent['class']}.php"),
+
             [
                 'DummyClass' => $parsedEvent['class'],
                 'DummyNamespace' => $parsedEvent['namespace'],
@@ -86,7 +87,7 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         $this->createFromStub(
             'listener.stub',
-            app_path("Listeners/{$parsedListener['path']}/{$parsedListener['class']}.php"),
+          app_path("Listeners/{$parsedListener['namespacePath']}/{$parsedListener['class']}.php"),
             [
                 'DummyClass' => $parsedListener['class'],
                 'DummyNamespace' => $parsedListener['namespace'],
@@ -123,7 +124,7 @@ class MakeFullNotificationCommand extends Command
         $input = str_replace('\\', '/', $input);
         $parts = explode('/', trim($input, '/'));
 
-        // Class (always StudlyCase)
+        // Class always StudlyCase
         $class = Str::studly(array_pop($parts));
 
         // Namespace uses StudlyCase folders
@@ -134,17 +135,21 @@ class MakeFullNotificationCommand extends Command
             $namespace .= '\\' . implode('\\', $namespaceParts);
         }
 
-        // LOWERCASE path used for view + lang files
+        // StudlyCase path for app files (PSR-4 correct)
+        $namespacePath = implode('/', $namespaceParts);
+
+        // Lowercase path for lang + views
         $lowerPath = implode('/', array_map(fn($p) => strtolower($p), $parts));
 
-        // Dot notation for lang + view keys
+        // Dot notation lower for email.* keys
         $dotPath = str_replace('/', '.', $lowerPath);
 
         return [
-            'class'     => $class,
-            'namespace' => $namespace,
-            'path'      => $lowerPath,  // <-- lowercase folders
-            'dotPath'   => $dotPath,    // <-- lowercase/orders
+            'class'         => $class,
+            'namespace'     => $namespace,
+            'namespacePath' => $namespacePath, // <-- For app paths (StudlyCase)
+            'path'          => $lowerPath,     // <-- For lang + view paths (lowercase)
+            'dotPath'       => $dotPath,
         ];
     }
 
@@ -172,25 +177,24 @@ class MakeFullNotificationCommand extends Command
     // --------------------------------------------------------
     // Generate lang files (EN + AR)
     // --------------------------------------------------------
-    protected function generateLangFiles($slug, $parsed)
+    protected function generateLangFiles($slug, $parsedNotification)
     {
         foreach (['en', 'ar'] as $lang) {
 
-           $langFolder = lang_path("$lang/emails/{$parsed['path']}");
+            // Example: lang/en/emails/orders/
+           $folder = lang_path("{$lang}/emails/{$parsedNotification['path']}");
 
-            if (!is_dir($langFolder)) {
-                mkdir($langFolder, 0775, true);
+            if (!is_dir($folder)) {
+                mkdir($folder, 0777, true);
             }
 
-            $target = "{$langFolder}/{$slug}.php";
+            // file path:
+            $target = "{$folder}/{$slug}.php";
 
             $this->createFromStub(
                 "lang/{$lang}.stub",
                 $target,
-                [
-                    'DummySlug' => $slug,
-                    'DummyPath' => $parsed['dotPath'], // for notification stub
-                ]
+                ['DummySlug' => $slug]
             );
         }
     }
