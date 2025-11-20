@@ -7,14 +7,30 @@ use Illuminate\Support\Str;
 
 class MakeFullNotificationCommand extends Command
 {
-    protected $signature = 'notification-generator:make-notification {name : Notification name} {--event=} {--listener=}';
+    protected $signature = 'notification-generator:make-notification {name? : Notification name} {--event=} {--listener=}';
 
     protected $description = 'Generate notification, event, listener, and translation files';
 
     public function handle()
     {
-        $name = Str::studly($this->argument('name'));
+        // Ask for notification name
+        $inputName = $this->argument('name') ?: $this->ask('Input notification name');
+        
+        if (empty($inputName)) {
+            $this->error('Notification name is required!');
+            return 1;
+        }
+        
+        $name = Str::studly($inputName);
         $slug = Str::kebab($name);
+
+        // Ask for event name
+        $eventInput = $this->option('event') ?: $this->ask('Event name', "{$name}Event");
+        $event = Str::studly($eventInput);
+
+        // Ask for listener name
+        $listenerInput = $this->option('listener') ?: $this->ask('Listener name', "{$name}Listener");
+        $listener = Str::studly($listenerInput);
 
         // Generate Notification
         $this->createFromStub(
@@ -37,7 +53,6 @@ class MakeFullNotificationCommand extends Command
         );
 
         // Generate Event
-        $event = $this->option('event') ?: "{$name}Event";
         $this->createFromStub(
             'event.stub',
             app_path("Events/{$event}.php"),
@@ -48,7 +63,6 @@ class MakeFullNotificationCommand extends Command
         );
 
         // Generate Listener
-        $listener = $this->option('listener') ?: "{$name}Listener";
         $this->createFromStub(
             'listener.stub',
             app_path("Listeners/{$listener}.php"),
