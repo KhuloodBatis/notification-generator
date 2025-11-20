@@ -61,7 +61,7 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         $this->createFromStub(
             'markdown.stub',
-            resource_path("views/mail/{$slug}.blade.php"),
+            resource_path("views/emails/{$slug}.blade.php"),
             [
                 'DummySlug' => $slug
             ]

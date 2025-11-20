@@ -1,4 +1,4 @@
-@component('mail::message')
+<x-mail::message>
 # {{ $greeting }}
 
 @foreach ($introLines as $line)
@@ -6,17 +6,17 @@
 
 @endforeach
 
-@isset($actionText)
-@component('mail::button', ['url' => $actionUrl])
+@if (!empty($actionText) && !empty($actionUrl))
+<x-mail::button :url="$actionUrl">
 {{ $actionText }}
-@endcomponent
-@endisset
+</x-mail::button>
+@endif
 
 @foreach ($outroLines as $line)
 {{ $line }}
 
 @endforeach
 
-@lang('Thanks'),<br>
+{{ __('Thanks') }},<br>
 {{ config('app.name') }}
-@endcomponent
+</x-mail::message>
