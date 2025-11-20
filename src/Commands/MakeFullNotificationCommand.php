@@ -148,8 +148,11 @@ class MakeFullNotificationCommand extends Command
             $content = str_replace($key, $value, $content);
         }
 
-        if (!is_dir(dirname($target))) {
-            mkdir(dirname($target), 0777, true);
+        $directory = dirname($target);
+
+        // FIX: ensure full directory path is created recursively
+        if (!is_dir($directory)) {
+            mkdir($directory, 0755, true);
         }
 
         file_put_contents($target, $content);
