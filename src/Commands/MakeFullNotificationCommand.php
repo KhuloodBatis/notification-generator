@@ -61,11 +61,12 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         $this->createFromStub(
             'markdown.stub',
-            resource_path("views/emails/{$slug}.blade.php"),
+            resource_path("views/emails/" . $parsedNotification['path'] . "/{$slug}.blade.php"),
             [
                 'DummySlug' => $slug
             ]
         );
+
 
         // ----------------------------------------------------
         // 6. GENERATE EVENT
@@ -96,7 +97,7 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         // 8. TRANSLATION FILES
         // ----------------------------------------------------
-        $this->generateLangFiles($slug);
+        $this->generateLangFiles($slug, $parsedNotification);
 
         // ----------------------------------------------------
         // 9. SUMMARY
@@ -122,7 +123,7 @@ class MakeFullNotificationCommand extends Command
         $parts = explode('/', trim($input, '/'));
 
         $class = Str::studly(array_pop($parts));
-        $directories = array_map(fn ($p) => Str::studly($p), $parts);
+        $directories = array_map(fn($p) => Str::studly($p), $parts);
 
         $namespace = $baseNamespace;
         if (!empty($directories)) {
@@ -157,18 +158,23 @@ class MakeFullNotificationCommand extends Command
     // --------------------------------------------------------
     // Generate lang files (EN + AR)
     // --------------------------------------------------------
-    protected function generateLangFiles($slug)
+    protected function generateLangFiles($slug, $parsed)
     {
         foreach (['en', 'ar'] as $lang) {
-            $folder = lang_path($lang);
+
+            // Example: lang/en/emails/orders/
+            $folder = lang_path("{$lang}/emails/" . $parsed['path']);
 
             if (!is_dir($folder)) {
                 mkdir($folder, 0777, true);
             }
 
+            // file path:
+            $target = "{$folder}/{$slug}.php";
+
             $this->createFromStub(
                 "lang/{$lang}.stub",
-                "{$folder}/{$slug}.php",
+                $target,
                 ['DummySlug' => $slug]
             );
         }
