@@ -61,7 +61,7 @@ class MakeFullNotificationCommand extends Command
         // ----------------------------------------------------
         $this->createFromStub(
             'markdown.stub',
-            resource_path("views/emails/" . $parsedNotification['path'] . "/{$slug}.blade.php"),
+            resource_path("views/emails/" . strtolower($parsedNotification['path']) . "/{$slug}.blade.php"),
             [
                 'DummySlug' => $slug
             ]
@@ -163,7 +163,7 @@ class MakeFullNotificationCommand extends Command
         foreach (['en', 'ar'] as $lang) {
 
             // Example: lang/en/emails/orders/
-            $folder = lang_path("{$lang}/emails/" . $parsed['path']);
+            $folder = lang_path("{$lang}/emails/" . strtolower($parsed['path']));
 
             if (!is_dir($folder)) {
                 mkdir($folder, 0777, true);

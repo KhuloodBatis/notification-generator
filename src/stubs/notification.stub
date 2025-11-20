@@ -34,15 +34,18 @@ class DummyClass extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $base = 'emails.DummyPath.DummySlug';
+        $view = 'emails.DummyPath.DummySlug';
+
         return (new MailMessage)
-                    ->subject(__('DummySlug.subject'))
-                    ->markdown('mail.DummySlug', [
-                        'greeting' => __('DummySlug.greeting'),
-                        'introLines' => [__('DummySlug.intro')],
-                        'actionText' => __('DummySlug.action_text'),
-                        'actionUrl' => url('/'),
-                        'outroLines' => [__('DummySlug.outro')],
-                    ]);
+            ->subject(__("$base.subject"))
+            ->markdown($view, [
+                'greeting'   => __("$base.greeting"),
+                'introLines' => [__("$base.intro")],
+                'actionText' => __("$base.action_text"),
+                'actionUrl'  => url('/'),
+                'outroLines' => [__("$base.outro")],
+            ]);
     }
 
     /**
