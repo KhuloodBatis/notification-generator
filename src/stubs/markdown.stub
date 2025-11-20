@@ -1,0 +1,22 @@
+@component('mail::message')
+# {{ $greeting }}
+
+@foreach ($introLines as $line)
+{{ $line }}
+
+@endforeach
+
+@isset($actionText)
+@component('mail::button', ['url' => $actionUrl])
+{{ $actionText }}
+@endcomponent
+@endisset
+
+@foreach ($outroLines as $line)
+{{ $line }}
+
+@endforeach
+
+@lang('Thanks'),<br>
+{{ config('app.name') }}
+@endcomponent

@@ -7,10 +7,7 @@ use Illuminate\Support\Str;
 
 class MakeFullNotificationCommand extends Command
 {
-    protected $signature = 'notification-generator:make-notification 
-        {name : Notification name} 
-        {--event=} 
-        {--listener=}';
+    protected $signature = 'notification-generator:make-notification {name : Notification name} {--event=} {--listener=}';
 
     protected $description = 'Generate notification, event, listener, and translation files';
 
@@ -19,6 +16,7 @@ class MakeFullNotificationCommand extends Command
         $name = Str::studly($this->argument('name'));
         $slug = Str::kebab($name);
 
+        // Generate Notification
         $this->createFromStub(
             'notification.stub',
             app_path("Notifications/{$name}.php"),
@@ -29,6 +27,16 @@ class MakeFullNotificationCommand extends Command
             ]
         );
 
+        // Generate Markdown View
+        $this->createFromStub(
+            'markdown.stub',
+            resource_path("views/mail/{$slug}.blade.php"),
+            [
+                'DummySlug' => $slug
+            ]
+        );
+
+        // Generate Event
         $event = $this->option('event') ?: "{$name}Event";
         $this->createFromStub(
             'event.stub',
@@ -39,6 +47,7 @@ class MakeFullNotificationCommand extends Command
             ]
         );
 
+        // Generate Listener
         $listener = $this->option('listener') ?: "{$name}Listener";
         $this->createFromStub(
             'listener.stub',
@@ -51,9 +60,17 @@ class MakeFullNotificationCommand extends Command
             ]
         );
 
-        $this->copyLang();
+        // Generate Language Files
+        $this->generateLangFiles($slug);
 
-        $this->info("Notification package generated successfully!");
+        $this->info("✅ Notification package generated successfully!");
+        $this->info("📁 Files created:");
+        $this->line("   - app/Notifications/{$name}.php");
+        $this->line("   - app/Events/{$event}.php");
+        $this->line("   - app/Listeners/{$listener}.php");
+        $this->line("   - resources/views/mail/{$slug}.blade.php");
+        $this->line("   - lang/en/{$slug}.php");
+        $this->line("   - lang/ar/{$slug}.php");
     }
 
     protected function createFromStub($stub, $target, $replace)
@@ -68,15 +85,16 @@ class MakeFullNotificationCommand extends Command
         file_put_contents($target, $content);
     }
 
-    protected function copyLang()
+    protected function generateLangFiles($slug)
     {
         foreach (['en', 'ar'] as $lang) {
             $folder = lang_path($lang);
             if (!is_dir($folder)) mkdir($folder, 0777, true);
 
-            copy(
-                __DIR__ . "/../stubs/lang/{$lang}.stub",
-                "{$folder}/notifications.php"
+            $this->createFromStub(
+                "lang/{$lang}.stub",
+                "{$folder}/{$slug}.php",
+                ['DummySlug' => $slug]
             );
         }
     }

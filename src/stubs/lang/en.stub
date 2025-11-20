@@ -1,0 +1,9 @@
+<?php
+
+return [
+    'subject' => 'Notification Subject',
+    'greeting' => 'Hello!',
+    'intro' => 'This is a notification message.',
+    'action_text' => 'Click Here',
+    'outro' => 'Thank you for using our application!',
+];

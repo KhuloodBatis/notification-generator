@@ -19,11 +19,6 @@
     "php": "^8.1",
     "illuminate/support": "^10.0|^11.0"
   },
-
-  "repositories": [
-    {
-        "type": "path",
-        "url": "../notification-generator"
-    }
-]
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }
