@@ -7,43 +7,58 @@ use Illuminate\Support\Str;
 
 class MakeFullNotificationCommand extends Command
 {
-    protected $signature = 'notification-generator:make-notification {name? : Notification name} {--event=} {--listener=}';
+    protected $signature = 'notification-generator:make-notification 
+        {name? : Notification name}
+        {--event= : Event name}
+        {--listener= : Listener name}';
 
     protected $description = 'Generate notification, event, listener, and translation files';
 
     public function handle()
     {
-        // Ask for notification name
+        // ----------------------------------------------------
+        // 1. NOTIFICATION NAME
+        // ----------------------------------------------------
         $inputName = $this->argument('name') ?: $this->ask('Input notification name');
-        
+
         if (empty($inputName)) {
             $this->error('Notification name is required!');
             return 1;
         }
-        
-        $name = Str::studly($inputName);
-        $slug = Str::kebab($name);
 
-        // Ask for event name
-        $eventInput = $this->option('event') ?: $this->ask('Event name', "{$name}Event");
-        $event = Str::studly($eventInput);
+        // Parse folder + class name
+        $parsedNotification = $this->parseName($inputName, 'App\\Notifications');
+        $className = $parsedNotification['class'];
+        $slug = Str::kebab($className);
 
-        // Ask for listener name
-        $listenerInput = $this->option('listener') ?: $this->ask('Listener name', "{$name}Listener");
-        $listener = Str::studly($listenerInput);
+        // ----------------------------------------------------
+        // 2. EVENT NAME
+        // ----------------------------------------------------
+        $eventInput = $this->option('event') ?: $this->ask('Event name', "{$className}Event");
+        $parsedEvent = $this->parseName($eventInput, 'App\\Events');
 
-        // Generate Notification
+        // ----------------------------------------------------
+        // 3. LISTENER NAME
+        // ----------------------------------------------------
+        $listenerInput = $this->option('listener') ?: $this->ask('Listener name', "{$className}Listener");
+        $parsedListener = $this->parseName($listenerInput, 'App\\Listeners');
+
+        // ----------------------------------------------------
+        // 4. GENERATE NOTIFICATION
+        // ----------------------------------------------------
         $this->createFromStub(
             'notification.stub',
-            app_path("Notifications/{$name}.php"),
+            app_path("Notifications/{$parsedNotification['path']}/{$parsedNotification['class']}.php"),
             [
-                'DummyClass' => $name,
+                'DummyClass' => $parsedNotification['class'],
+                'DummyNamespace' => $parsedNotification['namespace'],
                 'DummySlug' => $slug,
-                'DummyNamespace' => 'App\\Notifications'
             ]
         );
 
-        // Generate Markdown View
+        // ----------------------------------------------------
+        // 5. GENERATE MARKDOWN TEMPLATE
+        // ----------------------------------------------------
         $this->createFromStub(
             'markdown.stub',
             resource_path("views/mail/{$slug}.blade.php"),
@@ -52,58 +67,104 @@ class MakeFullNotificationCommand extends Command
             ]
         );
 
-        // Generate Event
+        // ----------------------------------------------------
+        // 6. GENERATE EVENT
+        // ----------------------------------------------------
         $this->createFromStub(
             'event.stub',
-            app_path("Events/{$event}.php"),
+            app_path("Events/{$parsedEvent['path']}/{$parsedEvent['class']}.php"),
             [
-                'DummyClass' => $event,
-                'DummyNamespace' => 'App\\Events'
+                'DummyClass' => $parsedEvent['class'],
+                'DummyNamespace' => $parsedEvent['namespace'],
             ]
         );
 
-        // Generate Listener
+        // ----------------------------------------------------
+        // 7. GENERATE LISTENER
+        // ----------------------------------------------------
         $this->createFromStub(
             'listener.stub',
-            app_path("Listeners/{$listener}.php"),
+            app_path("Listeners/{$parsedListener['path']}/{$parsedListener['class']}.php"),
             [
-                'DummyClass' => $listener,
-                'DummyNamespace' => 'App\\Listeners',
-                'DummyEvent' => "App\\Events\\{$event}",
-                'DummyNotification' => "App\\Notifications\\{$name}"
+                'DummyClass' => $parsedListener['class'],
+                'DummyNamespace' => $parsedListener['namespace'],
+                'DummyEvent' => $parsedEvent['namespace'] . '\\' . $parsedEvent['class'],
+                'DummyNotification' => $parsedNotification['namespace'] . '\\' . $parsedNotification['class'],
             ]
         );
 
-        // Generate Language Files
+        // ----------------------------------------------------
+        // 8. TRANSLATION FILES
+        // ----------------------------------------------------
         $this->generateLangFiles($slug);
 
-        $this->info("✅ Notification package generated successfully!");
+        // ----------------------------------------------------
+        // 9. SUMMARY
+        // ----------------------------------------------------
+        $this->info("✅ Notification package generated successfully!\n");
         $this->info("📁 Files created:");
-        $this->line("   - app/Notifications/{$name}.php");
-        $this->line("   - app/Events/{$event}.php");
-        $this->line("   - app/Listeners/{$listener}.php");
+        $this->line("   - app/Notifications/{$parsedNotification['path']}/{$parsedNotification['class']}.php");
+        $this->line("   - app/Events/{$parsedEvent['path']}/{$parsedEvent['class']}.php");
+        $this->line("   - app/Listeners/{$parsedListener['path']}/{$parsedListener['class']}.php");
         $this->line("   - resources/views/mail/{$slug}.blade.php");
         $this->line("   - lang/en/{$slug}.php");
         $this->line("   - lang/ar/{$slug}.php");
+
+        return 0;
     }
 
+    // --------------------------------------------------------
+    // Parse folder + class + namespace
+    // --------------------------------------------------------
+    protected function parseName($input, $baseNamespace = 'App')
+    {
+        $input = str_replace('\\', '/', $input);
+        $parts = explode('/', trim($input, '/'));
+
+        $class = Str::studly(array_pop($parts));
+        $directories = array_map(fn ($p) => Str::studly($p), $parts);
+
+        $namespace = $baseNamespace;
+        if (!empty($directories)) {
+            $namespace .= '\\' . implode('\\', $directories);
+        }
+
+        return [
+            'class' => $class,
+            'namespace' => $namespace,
+            'path' => implode('/', $directories),
+        ];
+    }
+
+    // --------------------------------------------------------
+    // Create file from stub
+    // --------------------------------------------------------
     protected function createFromStub($stub, $target, $replace)
     {
         $content = file_get_contents(__DIR__ . "/../stubs/{$stub}");
+
         foreach ($replace as $key => $value) {
             $content = str_replace($key, $value, $content);
         }
+
         if (!is_dir(dirname($target))) {
             mkdir(dirname($target), 0777, true);
         }
+
         file_put_contents($target, $content);
     }
 
+    // --------------------------------------------------------
+    // Generate lang files (EN + AR)
+    // --------------------------------------------------------
     protected function generateLangFiles($slug)
     {
         foreach (['en', 'ar'] as $lang) {
             $folder = lang_path($lang);
-            if (!is_dir($folder)) mkdir($folder, 0777, true);
+
+            if (!is_dir($folder)) {
+                mkdir($folder, 0777, true);
+            }
 
             $this->createFromStub(
                 "lang/{$lang}.stub",
