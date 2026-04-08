@@ -21,8 +21,8 @@ class DummyClass
     /**
      * Handle the event.
      */
-    public function handle(DummyEvent $event): void
+    public function handle(DummyEventClass $event): void
     {
-        // Notification::send($users, new DummyNotification());
+        // Notification::send($users, new DummyNotificationClass());
     }
 }
